@@ -97,6 +97,13 @@ export const useDailyActivity = () => {
   });
 };
 
+export const useDailyCounts = () => {
+  return useQuery({
+    queryKey: ['dailyCounts'],
+    queryFn: readingService.getDailyCounts,
+  });
+};
+
 export const useStats = () => {
   return useQuery({
     queryKey: ['stats'],
@@ -130,6 +137,7 @@ export const useSetSetting = () => {
       readingService.setSetting(key, value),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['setting', variables.key] });
+      queryClient.invalidateQueries({ queryKey: ['dailyCounts'] });
     },
   });
 };

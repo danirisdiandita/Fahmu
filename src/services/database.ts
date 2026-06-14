@@ -1,9 +1,6 @@
 import * as SQLite from 'expo-sqlite';
-import { seedData } from './seedData';
 
 let db: SQLite.SQLiteDatabase | null = null;
-
-const CURRENT_SCHEMA_VERSION = 6;
 
 export async function getDb() {
   if (!db) {
@@ -16,41 +13,6 @@ export async function getDb() {
 async function initializeDatabase(database: SQLite.SQLiteDatabase) {
   await database.execAsync(`
     PRAGMA journal_mode = WAL;
-
-    CREATE TABLE IF NOT EXISTS readings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT,
-      category TEXT,
-      sort_order INTEGER,
-      arabic_text TEXT,
-      transliteration TEXT,
-      translation TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS verses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      reading_id INTEGER NOT NULL,
-      verse_number INTEGER NOT NULL,
-      arabic_text TEXT NOT NULL,
-      transliteration TEXT,
-      translation TEXT NOT NULL,
-      meaning TEXT,
-      sort_order INTEGER,
-      FOREIGN KEY (reading_id) REFERENCES readings(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS words (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      verse_id INTEGER,
-      reading_id INTEGER NOT NULL,
-      arabic_text TEXT NOT NULL,
-      transliteration TEXT,
-      translation TEXT NOT NULL,
-      sort_order INTEGER,
-      FOREIGN KEY (verse_id) REFERENCES verses(id) ON DELETE CASCADE,
-      FOREIGN KEY (reading_id) REFERENCES readings(id) ON DELETE CASCADE
-    );
 
     CREATE TABLE IF NOT EXISTS learning_progress (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,43 +45,11 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
     );
   `);
 
-  const schemaVersion = await database.getFirstAsync<{ value: string }>(
-    "SELECT value FROM user_settings WHERE key = 'schema_version'"
-  );
-
-  if (!schemaVersion) {
-    await seedData(database);
-    await database.runAsync(
-      "INSERT OR REPLACE INTO user_settings (key, value) VALUES ('schema_version', ?)",
-      String(CURRENT_SCHEMA_VERSION)
-    );
-  } else if (Number(schemaVersion.value) < CURRENT_SCHEMA_VERSION) {
-    await database.execAsync('BEGIN');
-    try {
-      await database.execAsync('PRAGMA foreign_keys = OFF');
-      await database.execAsync('DELETE FROM words');
-      await database.execAsync('DELETE FROM verses');
-      await database.execAsync('DELETE FROM readings');
-      await database.execAsync('DELETE FROM learning_progress');
-      await database.execAsync('PRAGMA foreign_keys = ON');
-      await seedData(database);
-      await database.runAsync(
-        "INSERT OR REPLACE INTO user_settings (key, value) VALUES ('schema_version', ?)",
-        String(CURRENT_SCHEMA_VERSION)
-      );
-      await database.execAsync('COMMIT');
-    } catch (e) {
-      await database.execAsync('ROLLBACK');
-      console.error('Migration failed, rolling back:', e);
-    }
-  }
+  await database.runAsync("INSERT OR IGNORE INTO user_settings (key, value) VALUES ('daily_goal', '20')");
+  await database.runAsync("INSERT OR IGNORE INTO user_settings (key, value) VALUES ('onboarding_complete', 'false')");
 }
 
 export async function resetDatabase() {
   const database = await getDb();
   await database.execAsync('DELETE FROM learning_progress');
-  await database.runAsync(
-    "INSERT OR REPLACE INTO user_settings (key, value) VALUES ('schema_version', ?)",
-    String(CURRENT_SCHEMA_VERSION)
-  );
 }

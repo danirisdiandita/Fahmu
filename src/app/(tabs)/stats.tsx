@@ -2,11 +2,13 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BorderRadius, SereneColors, Spacing, Typography } from '@/constants/theme';
-import { useDailyActivity, useStats } from '@/hooks/useReadings';
+import { useDailyCounts, useSetting, useStats } from '@/hooks/useReadings';
 
 export default function StatsScreen() {
   const { data: stats } = useStats();
-  const { data: dailyActivity } = useDailyActivity();
+  const { data: dailyCounts } = useDailyCounts();
+  const { data: dailyGoalStr } = useSetting('daily_goal');
+  const dailyGoal = Number(dailyGoalStr ?? '20');
 
   const mastered = stats?.wordsMastered ?? 0;
   const learning = stats?.wordsLearning ?? 0;
@@ -16,13 +18,16 @@ export default function StatsScreen() {
 
   const heatmapLevels = ['#e4e2de', '#b0f0d6', '#80bea6', '#2b6954', '#003527'];
   const today = new Date();
+  const quarter = dailyGoal * 0.25;
+  const half = dailyGoal * 0.5;
+  const threeQuarter = dailyGoal * 0.75;
   const heatmapCells = Array.from({ length: 84 }).map((_, i) => {
     const d = new Date(today);
     d.setDate(d.getDate() - (83 - i));
     const dateStr = d.toISOString().split('T')[0];
-    const activity = dailyActivity?.find((a) => a.date === dateStr);
-    const count = activity?.count ?? 0;
-    const level = count === 0 ? 0 : count <= 5 ? 1 : count <= 15 ? 2 : count <= 30 ? 3 : 4;
+    const counts = dailyCounts?.find((a) => a.date === dateStr);
+    const count = counts?.count ?? 0;
+    const level = count === 0 ? 0 : count <= quarter ? 1 : count <= half ? 2 : count <= threeQuarter ? 3 : 4;
     return { date: dateStr, level, count };
   });
 

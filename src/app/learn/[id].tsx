@@ -1,10 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Animated, I18nManager, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, I18nManager, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ArabicFont, BorderRadius, SereneColors, Spacing, Typography } from '@/constants/theme';
-import { useReading, useSetting, useUpsertProgress, useVerses, useWordsByReading } from '@/hooks/useReadings';
+import { useLogStudySession, useReading, useSetSetting, useSetting, useUpsertProgress, useVerses, useWordsByReading } from '@/hooks/useReadings';
 
 export default function LearnScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,15 +16,23 @@ export default function LearnScreen() {
   const { data: words, isLoading: wordsLoading } = useWordsByReading(readingId);
   const { data: dailyGoalSetting } = useSetting('daily_goal');
   const { mutate: saveProgress } = useUpsertProgress();
+  const { mutate: logSession } = useLogStudySession();
+  const { mutate: updateSetting } = useSetSetting();
+
+  const todayKey = `daily_count_${new Date().toISOString().split('T')[0]}`;
+  const { data: dailyCountStr } = useSetting(todayKey);
 
   const flipAnim = useRef(new Animated.Value(0)).current;
-  const [mode, setMode] = useState<'word' | 'verse'>('word');
+  const [mode, setMode] = useState<'word' | 'verse' | 'reading'>('word');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
+  const sessionStartRef = useRef(Date.now());
 
-  const items = mode === 'word' ? words ?? [] : verses ?? [];
+  const items = mode === 'word' ? words ?? [] : mode === 'verse' ? verses ?? [] : [];
   const currentItem = items[currentIndex] ?? null;
+  const dailyGoal = Number(dailyGoalSetting ?? '20');
+  const studiedToday = Number(dailyCountStr ?? '0');
 
   const flipToBack = () => {
     Animated.timing(flipAnim, {
@@ -48,6 +56,8 @@ export default function LearnScreen() {
   const handleQuality = (quality: number) => {
     if (!currentItem) return;
     saveProgress({ entityType: mode, entityId: currentItem.id, quality });
+    const next = studiedToday + 1;
+    updateSetting({ key: todayKey, value: String(next) });
     goNext();
   };
 
@@ -56,15 +66,18 @@ export default function LearnScreen() {
     if (currentIndex < items.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      router.back();
+      const durationMinutes = Math.round((Date.now() - sessionStartRef.current) / 60000);
+      logSession({ wordsStudied: items.length, wordsMastered: items.length, durationMinutes: Math.max(1, durationMinutes) });
+      setCurrentIndex(0);
+      sessionStartRef.current = Date.now();
     }
   };
 
   const isWordMode = mode === 'word';
+  const isVerseMode = mode === 'verse';
+  const isReadingMode = mode === 'reading';
   const isLoading = readingLoading || versesLoading || wordsLoading;
   const totalItems = items.length;
-  const dailyGoal = Number(dailyGoalSetting ?? '20');
-  const studiedToday = Math.min(currentIndex, dailyGoal);
 
   return (
     <View style={styles.container}>
@@ -90,30 +103,48 @@ export default function LearnScreen() {
         </View>
       )}
 
-      {!isLoading && !readingError && totalItems === 0 && (
+      {!isLoading && !readingError && !isReadingMode && totalItems === 0 && (
         <View style={styles.centeredState}>
           <MaterialIcons name="library-books" size={48} color={SereneColors.primaryContainer} />
           <Text style={styles.centeredText}>Belum ada data</Text>
         </View>
       )}
 
-      {!isLoading && !readingError && totalItems > 0 && (
-        <View style={styles.contentWrapper}>
+        <View style={{ flex: 1 }}>
           <View style={styles.toggleRow}>
-            <Pressable
-              style={[styles.toggleButton, isWordMode && styles.toggleActive]}
-              onPress={() => { setMode('word'); setCurrentIndex(0); resetFlip(); }}
-            >
-              <Text style={[styles.toggleText, isWordMode && styles.toggleTextActive]}>Per Word</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.toggleButton, !isWordMode && styles.toggleActive]}
-              onPress={() => { setMode('verse'); setCurrentIndex(0); resetFlip(); }}
-            >
-              <Text style={[styles.toggleText, !isWordMode && styles.toggleTextActive]}>Per Verse</Text>
-            </Pressable>
-          </View>
+        <Pressable
+          style={[styles.toggleButton, isWordMode && styles.toggleActive]}
+          onPress={() => { setMode('word'); setCurrentIndex(0); resetFlip(); }}
+        >
+          <Text style={[styles.toggleText, isWordMode && styles.toggleTextActive]}>Per Word</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.toggleButton, isVerseMode && styles.toggleActive]}
+          onPress={() => { setMode('verse'); setCurrentIndex(0); resetFlip(); }}
+        >
+          <Text style={[styles.toggleText, isVerseMode && styles.toggleTextActive]}>Per Verse</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.toggleButton, isReadingMode && styles.toggleActive]}
+          onPress={() => { setMode('reading'); resetFlip(); }}
+        >
+          <Text style={[styles.toggleText, isReadingMode && styles.toggleTextActive]}>Bacaan</Text>
+        </Pressable>
+      </View>
 
+      {isReadingMode && !isLoading && !readingError && verses && (
+        <ScrollView style={styles.readingScroll} contentContainerStyle={styles.readingScrollContent}>
+          {verses.map((verse) => (
+            <View key={verse.id} style={styles.readingVerseRow}>
+              <Text style={styles.readingArabic}>{verse.arabic_text}</Text>
+              <Text style={styles.readingTranslation}>{verse.translation}</Text>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+
+      {!isReadingMode && !isLoading && !readingError && totalItems > 0 && (
+        <View style={styles.flashcardContent}>
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
               <Text style={styles.progressLabel}>Daily Goal</Text>
@@ -134,7 +165,7 @@ export default function LearnScreen() {
                   <Text style={styles.cardHint}>Tap to reveal</Text>
                   {currentItem && (
                     <View style={styles.cardTextContent}>
-                      <Text style={styles.arabicText}>{currentItem.arabic_text}</Text>
+                      <Text style={[styles.arabicText, isVerseMode && styles.arabicTextVerse]}>{currentItem.arabic_text}</Text>
                       {'transliteration' in currentItem && currentItem.transliteration ? (
                         <Text style={styles.transliterationText}>{currentItem.transliteration}</Text>
                       ) : null}
@@ -194,25 +225,7 @@ export default function LearnScreen() {
           </View>
         </View>
       )}
-
-      <View style={styles.bottomNav}>
-        <Pressable style={styles.navItem}>
-          <MaterialIcons name="auto-awesome" size={24} color={SereneColors.onSurfaceVariant} />
-          <Text style={styles.navLabel}>Focus</Text>
-        </Pressable>
-        <Pressable style={[styles.navItem, styles.navItemActive]}>
-          <MaterialIcons name="menu-book" size={24} color={SereneColors.onSurfaceVariant} />
-          <Text style={styles.navLabel}>Lessons</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <MaterialIcons name="leaderboard" size={24} color={SereneColors.onSurfaceVariant} />
-          <Text style={styles.navLabel}>Stats</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <MaterialIcons name="person" size={24} color={SereneColors.onSurfaceVariant} />
-          <Text style={styles.navLabel}>Settings</Text>
-        </Pressable>
-      </View>
+        </View>
     </View>
   );
 }
@@ -223,8 +236,33 @@ const styles = StyleSheet.create({
     backgroundColor: SereneColors.background,
     paddingTop: 48,
   },
-  contentWrapper: {
+  flashcardContent: {
     flex: 1,
+  },
+  readingScroll: {
+    flex: 1,
+  },
+  readingScrollContent: {
+    paddingHorizontal: Spacing.four,
+    paddingBottom: 40,
+  },
+  readingVerseRow: {
+    paddingVertical: Spacing.four,
+    borderBottomWidth: 1,
+    borderBottomColor: SereneColors.surfaceContainerHigh,
+    gap: Spacing.three,
+  },
+  readingArabic: {
+    fontSize: 28,
+    lineHeight: 48,
+    color: SereneColors.primary,
+    textAlign: 'right',
+    writingDirection: I18nManager.isRTL ? 'rtl' : 'rtl',
+    fontFamily: ArabicFont,
+  },
+  readingTranslation: {
+    ...Typography.bodyMd,
+    color: SereneColors.onSurface,
   },
   header: {
     flexDirection: 'row',
@@ -309,6 +347,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 4 / 5,
     maxHeight: 480,
+    overflow: 'hidden',
   },
   cardInner: {
     flex: 1,
@@ -350,6 +389,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     writingDirection: I18nManager.isRTL ? 'rtl' : 'rtl',
     fontFamily: ArabicFont,
+  },
+  arabicTextVerse: {
+    fontSize: 28,
+    lineHeight: 48,
   },
   transliterationText: {
     ...Typography.bodyLg,
@@ -436,37 +479,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingBottom: 16,
-    paddingTop: 8,
-    backgroundColor: SereneColors.surface,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    shadowColor: SereneColors.primary,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-  },
-  navItemActive: {
-    backgroundColor: SereneColors.secondaryContainer,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: 16,
-  },
-  navLabel: {
-    ...Typography.labelMd,
-    fontSize: 10,
-    color: SereneColors.onSurfaceVariant,
   },
   centeredState: {
     flex: 1,

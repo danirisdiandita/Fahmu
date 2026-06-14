@@ -3,13 +3,13 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BorderRadius, SereneColors, Spacing, Typography } from '@/constants/theme';
-import { useDailyActivity, useDueItems, useReadings, useStats } from '@/hooks/useReadings';
+import { useDailyCounts, useDueItems, useReadings, useStats } from '@/hooks/useReadings';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { data: readings } = useReadings();
   const { data: stats } = useStats();
-  const { data: dailyActivity } = useDailyActivity();
+  const { data: dailyActivity } = useDailyCounts();
   const streak = dailyActivity ? (() => {
     let count = 0;
     const d = new Date();

@@ -1,4 +1,5 @@
 import { createEmptyCard, fsrs, type FSRS, type Grade, Rating, type Card as FSRSCard } from 'ts-fsrs';
+import { allReadings, allVerses, allWords } from '@/data/readings';
 import { getDb } from './database';
 
 export type Reading = {
@@ -100,35 +101,33 @@ function cardToRow(entityType: string, entityId: number, card: FSRSCard, quality
 
 export const readingService = {
   getReadings: async (): Promise<Reading[]> => {
-    const db = await getDb();
-    return db.getAllAsync('SELECT * FROM readings ORDER BY sort_order');
+    return [...allReadings].sort((a, b) => a.sort_order - b.sort_order);
   },
 
   getReadingById: async (id: number): Promise<Reading | null> => {
-    const db = await getDb();
-    const row = await db.getFirstAsync<Reading>('SELECT * FROM readings WHERE id = ?', id);
-    return row ?? null;
+    return allReadings.find((r) => r.id === id) ?? null;
   },
 
   getVersesByReadingId: async (readingId: number): Promise<Verse[]> => {
-    const db = await getDb();
-    return db.getAllAsync('SELECT * FROM verses WHERE reading_id = ? ORDER BY verse_number', readingId);
+    return allVerses
+      .filter((v) => v.reading_id === readingId)
+      .sort((a, b) => a.verse_number - b.verse_number);
   },
 
   getVerseById: async (id: number): Promise<Verse | null> => {
-    const db = await getDb();
-    const row = await db.getFirstAsync<Verse>('SELECT * FROM verses WHERE id = ?', id);
-    return row ?? null;
+    return allVerses.find((v) => v.id === id) ?? null;
   },
 
   getWordsByVerseId: async (verseId: number): Promise<Word[]> => {
-    const db = await getDb();
-    return db.getAllAsync('SELECT * FROM words WHERE verse_id = ? ORDER BY sort_order', verseId);
+    return allWords
+      .filter((w) => w.verse_id === verseId)
+      .sort((a, b) => a.sort_order - b.sort_order);
   },
 
   getWordsByReadingId: async (readingId: number): Promise<Word[]> => {
-    const db = await getDb();
-    return db.getAllAsync('SELECT * FROM words WHERE reading_id = ? ORDER BY sort_order', readingId);
+    return allWords
+      .filter((w) => w.reading_id === readingId)
+      .sort((a, b) => a.sort_order - b.sort_order);
   },
 
   getProgress: async (entityType: string, entityId: number): Promise<LearningProgress | null> => {
@@ -203,9 +202,7 @@ export const readingService = {
     const wordsLearning = await db.getFirstAsync<{ count: number }>(
       "SELECT COUNT(*) as count FROM learning_progress WHERE state IN (0,1,3) AND entity_type = 'word'"
     );
-    const totalWords = await db.getFirstAsync<{ count: number }>(
-      'SELECT COUNT(*) as count FROM words'
-    );
+    const totalWords = allWords.length;
     const sessions = await db.getAllAsync<StudySession>(
       'SELECT * FROM study_sessions ORDER BY created_at DESC LIMIT 30'
     );
@@ -213,10 +210,8 @@ export const readingService = {
     return {
       wordsMastered: masteredCount,
       wordsLearning: wordsLearning?.count ?? 0,
-      totalWords: totalWords?.count ?? 0,
-      retentionRate: totalWords?.count
-        ? Math.round((masteredCount / (totalWords?.count ?? 1)) * 100)
-        : 0,
+      totalWords,
+      retentionRate: totalWords > 0 ? Math.round((masteredCount / totalWords) * 100) : 0,
       sessions,
     };
   },
@@ -230,43 +225,70 @@ export const readingService = {
   },
 
   getDueItemsWithContent: async (): Promise<DueItemWithContent[]> => {
-    const db = await getDb();
-    const now = new Date().toISOString();
-    return db.getAllAsync(
-      `SELECT lp.id as progress_id, lp.entity_type, lp.entity_id,
-              lp.stability, lp.difficulty, lp.state, lp.due, lp.reps, lp.lapses,
-              w.arabic_text, w.translation, w.transliteration, NULL as meaning,
-              w.reading_id, r.name as reading_name
-       FROM learning_progress lp
-       JOIN words w ON lp.entity_type = 'word' AND lp.entity_id = w.id
-       JOIN readings r ON w.reading_id = r.id
-       WHERE lp.due IS NOT NULL AND lp.due <= ?
-       UNION ALL
-       SELECT lp.id as progress_id, lp.entity_type, lp.entity_id,
-              lp.stability, lp.difficulty, lp.state, lp.due, lp.reps, lp.lapses,
-              v.arabic_text, v.translation, v.transliteration, v.meaning,
-              v.reading_id, r.name as reading_name
-       FROM learning_progress lp
-       JOIN verses v ON lp.entity_type = 'verse' AND lp.entity_id = v.id
-       JOIN readings r ON v.reading_id = r.id
-       WHERE lp.due IS NOT NULL AND lp.due <= ?
-       ORDER BY due`,
-      now, now
-    );
+    const dueItems = await readingService.getDueItems();
+
+    return dueItems.map((lp) => {
+      if (lp.entity_type === 'word') {
+        const word = allWords.find((w) => w.id === lp.entity_id);
+        const reading = word ? allReadings.find((r) => r.id === word.reading_id) : null;
+        return {
+          progress_id: lp.id,
+          entity_type: lp.entity_type,
+          entity_id: lp.entity_id,
+          reading_id: word?.reading_id ?? 0,
+          reading_name: reading?.name ?? 'Unknown',
+          arabic_text: word?.arabic_text ?? '',
+          transliteration: word?.transliteration ?? '',
+          translation: word?.translation ?? '',
+          meaning: null,
+          stability: lp.stability,
+          difficulty: lp.difficulty,
+          state: lp.state,
+          due: lp.due ?? '',
+          reps: lp.reps,
+          lapses: lp.lapses,
+        };
+      }
+      const verse = allVerses.find((v) => v.id === lp.entity_id);
+      const reading = verse ? allReadings.find((r) => r.id === verse.reading_id) : null;
+      return {
+        progress_id: lp.id,
+        entity_type: lp.entity_type,
+        entity_id: lp.entity_id,
+        reading_id: verse?.reading_id ?? 0,
+        reading_name: reading?.name ?? 'Unknown',
+        arabic_text: verse?.arabic_text ?? '',
+        transliteration: verse?.transliteration ?? '',
+        translation: verse?.translation ?? '',
+        meaning: verse?.meaning ?? null,
+        stability: lp.stability,
+        difficulty: lp.difficulty,
+        state: lp.state,
+        due: lp.due ?? '',
+        reps: lp.reps,
+        lapses: lp.lapses,
+      };
+    });
   },
 
   getReadingProgressStats: async (): Promise<{ reading_id: number; total: number; mastered: number; learning: number }[]> => {
-    const db = await getDb();
-    return db.getAllAsync(
-      `SELECT w.reading_id,
-              COUNT(*) as total,
-              COALESCE(SUM(CASE WHEN lp.state = 2 THEN 1 ELSE 0 END), 0) as mastered,
-              COALESCE(SUM(CASE WHEN lp.state IN (0,1,3) THEN 1 ELSE 0 END), 0) as learning
-       FROM words w
-       LEFT JOIN learning_progress lp ON lp.entity_type = 'word' AND lp.entity_id = w.id
-       GROUP BY w.reading_id
-       ORDER BY w.reading_id`
-    );
+    const allProgress = await readingService.getAllProgress();
+    const readingMap = new Map<number, { total: number; mastered: number; learning: number }>();
+
+    for (const word of allWords) {
+      const stats = readingMap.get(word.reading_id) ?? { total: 0, mastered: 0, learning: 0 };
+      stats.total++;
+      const progress = allProgress.find((p) => p.entity_type === 'word' && p.entity_id === word.id);
+      if (progress) {
+        if (progress.state === 2) stats.mastered++;
+        else stats.learning++;
+      }
+      readingMap.set(word.reading_id, stats);
+    }
+
+    return allReadings
+      .filter((r) => readingMap.has(r.id))
+      .map((r) => ({ reading_id: r.id, ...readingMap.get(r.id)! }));
   },
 
   getDailyActivity: async (): Promise<{ date: string; count: number }[]> => {
@@ -278,6 +300,17 @@ export const readingService = {
        ORDER BY date DESC
        LIMIT 90`
     );
+  },
+
+  getDailyCounts: async (): Promise<{ date: string; count: number }[]> => {
+    const db = await getDb();
+    const rows = await db.getAllAsync<{ key: string; value: string }>(
+      "SELECT key, value FROM user_settings WHERE key LIKE 'daily_count_%' ORDER BY key DESC LIMIT 90"
+    );
+    return rows.map((r) => ({
+      date: r.key.replace('daily_count_', ''),
+      count: parseInt(r.value, 10) || 0,
+    }));
   },
 
   logStudySession: async (wordsStudied: number, wordsMastered: number, durationMinutes: number): Promise<void> => {
