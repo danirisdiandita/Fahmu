@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sholat Khusyuk - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#bfc9c3",
+                    "surface-dim": "#dbdad6",
+                    "on-secondary-fixed": "#241a00",
+                    "primary-fixed-dim": "#95d3ba",
+                    "error-container": "#ffdad6",
+                    "background": "#fbf9f5",
+                    "on-error-container": "#93000a",
+                    "surface": "#fbf9f5",
+                    "surface-container": "#efeeea",
+                    "primary": "#003527",
+                    "tertiary-container": "#374557",
+                    "on-primary-fixed-variant": "#0b513d",
+                    "surface-variant": "#e4e2de",
+                    "surface-container-low": "#f5f3ef",
+                    "secondary-fixed-dim": "#e9c349",
+                    "on-secondary-fixed-variant": "#574500",
+                    "primary-fixed": "#b0f0d6",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#d4e4fa",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#002117",
+                    "on-surface-variant": "#404944",
+                    "surface-container-highest": "#e4e2de",
+                    "on-tertiary-fixed-variant": "#39485a",
+                    "primary-container": "#064e3b",
+                    "secondary-fixed": "#ffe088",
+                    "tertiary-fixed-dim": "#b9c8de",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f2f0ed",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-secondary-container": "#745c00",
+                    "surface-bright": "#fbf9f5",
+                    "secondary": "#735c00",
+                    "inverse-primary": "#95d3ba",
+                    "on-background": "#1b1c1a",
+                    "on-surface": "#1b1c1a",
+                    "outline": "#707974",
+                    "on-primary-container": "#80bea6",
+                    "secondary-container": "#fed65b",
+                    "surface-container-high": "#eae8e4",
+                    "on-tertiary-fixed": "#0d1c2d",
+                    "tertiary": "#202f40",
+                    "inverse-surface": "#30312e",
+                    "surface-tint": "#2b6954",
+                    "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "container-padding": "24px",
+                    "touch-target": "48px",
+                    "stack-gap": "16px",
+                    "section-gap": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Libre Caslon Text"],
+                    "display-sm": ["Libre Caslon Text"],
+                    "body-lg": ["Manrope"],
+                    "headline-lg": ["Libre Caslon Text"],
+                    "body-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "headline-md": ["Libre Caslon Text"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "400"}],
+                    "display-sm": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #fbf9f5;
+        color: #1b1c1a;
+        -webkit-font-smoothing: antialiased;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .shimmer {
+        background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+        background-size: 200% 100%;
+        animation: shimmer 3s infinite linear;
+      }
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .parallax-bg {
+        transition: transform 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-24 selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl shadow-sm shadow-primary/5 flex items-center justify-between px-container-padding h-touch-target">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/10">
+<img alt="User profile portrait" class="w-full h-full object-cover" data-alt="A serene, professional portrait of a person with a calm expression, softly lit with natural morning light. The background is a blurred, minimalist architectural space with warm wood tones and sage green accents. The overall aesthetic is peaceful and high-end, matching a premium spiritual application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTbcfplj_Ux7iXaaUauOBp_s1v2Xr5Xkm_471fDIgVSn-8bRPz0JJLFecwwgFGztNtFY-qcUEuzMYEZUBwJqnyD_Y7BK0oSL5WokJROHcH4nnlVuZm2mmhT0s3Y35kQI5Zy_Lk3Y85sLdKg1QGqg-pQVO3x-2dZNavzBahLV-U7l9CZI3OVBdJkKgnSP11gvKLdXlEoVFvxjwQYZgXXjD8Y85gXG6HDIv62vW162kHDzNKEiRCql8grUPpfb6iRnR5c4V6tgg-BWJy"/>
+</div>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary dark:text-primary-fixed-dim font-bold tracking-tight">Sholat Khusyuk</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</header>
+<main class="pt-24 px-container-padding max-w-2xl mx-auto space-y-section-gap">
+<!-- Welcome & Streak -->
+<section class="space-y-4">
+<div class="flex items-baseline justify-between">
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Assalamu'alaikum,</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">May your heart find peace today.</p>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="font-label-md text-label-md font-bold">12 DAYS</span>
+</div>
+<p class="text-[10px] uppercase tracking-widest text-outline">Prayer Streak</p>
+</div>
+</div>
+<!-- Focus Hero Section -->
+<div class="relative overflow-hidden rounded-2xl aspect-[4/5] md:aspect-video bg-primary-container p-8 flex flex-col justify-end group shadow-xl shadow-primary/10">
+<div class="absolute inset-0 opacity-40">
+<img alt="Atmospheric prayer setting" class="w-full h-full object-cover grayscale brightness-50 group-hover:scale-105 transition-transform duration-700" data-alt="A breathtaking, wide shot of a modern, minimalist mosque interior at dawn. Sunbeams pierce through geometric skylights, creating sharp patterns of light and shadow on a clean, cream-colored floor. The atmosphere is filled with a soft golden haze, evoking a profound sense of tranquility and spiritual focus. The color palette is dominated by warm whites, deep emerald greens, and golden highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqarsZUWrqccyvAj2RY4pMrV_W56QJl2Vd15ulYFZjx8xIclBTchtgA5SQ_NUpiDi0N1iY9dlt6QxKC0dF9rPfkj3soMqQOjoLXXxQRUHsnUlNaRtoqakx-NIKmdJTvY-CVltNpZYCG4rEFISS9Ooxf4EHz8jcBbok_H7ospSddINY5jdLxR22SvLZCG5Q1rkLYYO-XOhHnSMSTx0wcfQCOoMu40Pvh4ZEF9FaA4XMFGvRBWjSM64omv9HQ870qv-K7qKyQ-VkRWoS"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary-container via-primary-container/20 to-transparent"></div>
+<div class="relative z-10 space-y-4">
+<div class="inline-flex items-center px-3 py-1 bg-secondary-container/90 text-on-secondary-container rounded-full gap-2">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+<span class="font-label-md text-[12px]">CONTINUE PATH</span>
+</div>
+<div>
+<p class="text-primary-fixed font-label-md text-label-md tracking-widest uppercase mb-1">Current Focus</p>
+<h3 class="font-headline-lg text-headline-lg-mobile text-white">Meaning of Al-Fatihah</h3>
+</div>
+<button class="w-full bg-white text-primary h-touch-target rounded-xl font-label-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg shadow-black/20">
+                        Start Next Lesson
+                    </button>
+</div>
+</div>
+</section>
+<!-- Spaced Repetition (SRS) Card -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md-mobile text-on-surface">Ready to Review</h3>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-md text-[12px] px-3 py-1 rounded-full">4 ITEMS</span>
+</div>
+<div class="relative group">
+<div class="absolute -inset-0.5 bg-gradient-to-r from-secondary/20 to-primary/20 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+<div class="relative bg-surface-container-low border-t-2 border-secondary-fixed rounded-2xl p-6 flex items-center gap-6 shadow-sm">
+<div class="w-14 h-14 flex-shrink-0 bg-secondary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-3xl" style="font-variation-settings: 'FILL' 1;">rebase_edit</span>
+</div>
+<div class="flex-grow">
+<p class="font-body-md text-body-md font-bold text-on-surface">Spaced Repetition</p>
+<p class="font-body-md text-[14px] text-on-surface-variant">Reinforce your memory of the opening supplications.</p>
+</div>
+<button class="material-symbols-outlined text-primary-container font-bold hover:translate-x-1 transition-transform">chevron_right</button>
+</div>
+</div>
+</section>
+<!-- Last Studied & Bento Stats -->
+<section class="space-y-4">
+<h3 class="font-headline-md text-headline-md-mobile text-on-surface">Recent Activity</h3>
+<div class="grid grid-cols-2 gap-4">
+<!-- Last Studied Card -->
+<div class="col-span-2 sm:col-span-1 bg-surface-container-lowest p-5 rounded-2xl border border-surface-container-high flex flex-col justify-between h-48 shadow-sm">
+<div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-[20px]">history</span>
+<span class="font-label-md text-[11px] text-outline uppercase tracking-wider">Last Studied</span>
+</div>
+<h4 class="font-headline-md text-[18px] text-on-surface">Tasyahhud Al-Akhir</h4>
+<p class="font-body-md text-[13px] text-on-surface-variant mt-1">85% Mastered</p>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 mt-auto">
+<div class="bg-primary h-1.5 rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Circular Progress Stat -->
+<div class="col-span-2 sm:col-span-1 bg-surface-container-lowest p-5 rounded-2xl border border-surface-container-high flex flex-col items-center justify-center h-48 shadow-sm group">
+<div class="relative w-24 h-24 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-secondary transition-all duration-1000" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="62.8" stroke-width="6"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="font-display-sm text-[20px] text-primary">75%</span>
+</div>
+</div>
+<p class="font-label-md text-[12px] text-on-surface-variant mt-4 uppercase tracking-widest text-center">Course Progress</p>
+</div>
+</div>
+</section>
+<!-- Prayer Timer Contextual FAB Suppression Logic -->
+<!-- Note: As per instructions, FAB is suppressed on Dashboard if not primary. But a "Quick Start" is requested. -->
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl shadow-[0_-4px_20px_rgba(6,78,59,0.04)] rounded-t-xl flex justify-around items-center px-4 pb-4 pt-2">
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 duration-200 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-md text-[10px]">Focus</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-200 transition-all">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-md text-[10px]">Lessons</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-200 transition-all">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-md text-[10px]">Stats</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-200 transition-all">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-[10px]">Settings</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction: Parallax effect for the hero image
+        document.addEventListener('mousemove', (e) => {
+            const amount = 5;
+            const x = (e.clientX / window.innerWidth - 0.5) * amount;
+            const y = (e.clientY / window.innerHeight - 0.5) * amount;
+            const img = document.querySelector('.parallax-bg');
+            if (img) {
+                img.style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
+            }
+        });
+
+        // Simulating loading state for the progress ring
+        window.addEventListener('DOMContentLoaded', () => {
+            const circles = document.querySelectorAll('circle');
+            circles.forEach(circle => {
+                if (circle.classList.contains('text-secondary')) {
+                    circle.style.strokeDashoffset = "62.8"; // 75% of 251.2
+                }
+            });
+        });
+    </script>
+</body></html>
